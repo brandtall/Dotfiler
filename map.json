@@ -1,0 +1,4 @@
+[
+  { "source": "~/.config/ghostty/config", "target": "~/dotfiles/ghostty" },
+  { "source": "~/.vimrc", "target": "~/dotfiles/vimrc" }
+]
