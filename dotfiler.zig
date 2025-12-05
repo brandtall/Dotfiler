@@ -31,10 +31,30 @@ pub fn main() !void {
         .mappings = json,
     };
 
-    const resolved_source = try resolvePath(arena, config.mappings[0].source);
-    const resolved_target = try resolvePath(arena, config.mappings[0].target);
-    std.debug.print("First mapping: {s} -> {s}\n", .{ config.mappings[0].source, config.mappings[0].target });
-    std.debug.print("Resolved path: {s} -> {s}\n", .{ resolved_source, resolved_target });
+    for (config.mappings) |path| {
+
+        const resolved_source = try resolvePath(arena, path.source);
+        const resolved_target = try resolvePath(arena, path.target);
+
+        std.fs.accessAbsolute(resolved_source, .{}) catch {
+            std.debug.print("Source not found\n", .{});
+            continue;
+        };
+
+        const parent_dir_path = std.fs.path.dirname(resolved_target) orelse
+            return error.InvalidPath;
+
+        try std.fs.cwd().makePath(parent_dir_path); 
+        
+        std.fs.symLinkAbsolute(resolved_source, resolved_target, .{}) catch |err| {
+            if (err == error.PathAlreadyExists) {
+                std.debug.print("Skipping: Target already exists\n", .{});
+                continue;
+            }
+            return err;
+    };
+        std.debug.print("Linked\n", .{});
+    }
 }
 
 pub fn resolvePath(arena: std.mem.Allocator, path: []const u8) ![]const u8 {

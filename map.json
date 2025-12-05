@@ -1,4 +1,5 @@
 [
   { "source": "~/.config/ghostty/config", "target": "~/dotfiles/ghostty" },
+  { "source": "~/.config/nvim/init.lua", "target": "~/dotfiles/nvim" },
   { "source": "~/.vimrc", "target": "~/dotfiles/vimrc" }
 ]
