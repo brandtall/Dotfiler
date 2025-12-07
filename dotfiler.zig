@@ -37,35 +37,32 @@ pub fn main() !void {
         }
     }
 
-    const file = try std.fs.cwd().openFile("map.json", .{ .mode = .read_only });
-    defer file.close();
+    const sourceDir = "~/dotfiles";
+    const targetDir = "~/.config";
+    
+    const resolved_source = try resolvePathWithHome(arena, sourceDir, homeDir);
+    const resolved_target = try resolvePathWithHome(arena, targetDir, homeDir);
 
-    const slice = try file.readToEndAlloc(arena, 1024 * 1024); // read a max of 1MB for now
-    const json = try std.json.parseFromSliceLeaky([]Mapping, arena, slice, .{ .allocate = .alloc_always });
+    if (!dryRun) {
+        try std.fs.cwd().makePath(resolved_target);
+    }
 
-    const config = Config{
-        .mappings = json,
-    };
+    const dir = try std.fs.openDirAbsolute(resolved_source, .{});
 
-    for (config.mappings) |path| {
-        const resolved_source = try resolvePathWithHome(arena, path.source, homeDir);
-        const resolved_target = try resolvePathWithHome(arena, path.target, homeDir);
-
-        std.fs.accessAbsolute(resolved_source, .{}) catch {
-            std.debug.print("Source not found\n", .{});
+    var iterator = dir.iterate(); 
+    while (try iterator.next()) |entry| {
+       if (std.mem.startsWith(u8, entry.name, ".")) {
             continue;
-        };
+       }
 
-        const parent_dir_path = std.fs.path.dirname(resolved_target) orelse
-            return error.InvalidPath;
-
+       const finalSource = try std.fs.path.join(arena, &[_][]const u8{resolved_source, entry.name, });
+       const finalTarget = try std.fs.path.join(arena, &[_][]const u8{resolved_target, entry.name, });
+    
         if (dryRun) {
-            std.debug.print("Create a directory: {s} \n", .{parent_dir_path});
-            std.debug.print("Create a symlink from: {s} to: {s} \n", .{resolved_source, resolved_target});
+            std.debug.print("Create a symlink from: {s} to: {s} \n", .{finalSource, finalTarget});
 
         } else {
-            try std.fs.cwd().makePath(parent_dir_path);
-            std.fs.symLinkAbsolute(resolved_source, resolved_target, .{}) catch |err| {
+            std.fs.symLinkAbsolute(finalSource, finalTarget, .{}) catch |err| {
                 if (err == error.PathAlreadyExists) {
                     std.debug.print("Skipping: Target already exists\n", .{});
                     continue;
@@ -75,6 +72,7 @@ pub fn main() !void {
             std.debug.print("Linked\n", .{});
         }
     }
+
 }
 
 pub fn resolvePathWithHome(arena: std.mem.Allocator, path: []const u8, homeDir: []const u8) ![]const u8 {

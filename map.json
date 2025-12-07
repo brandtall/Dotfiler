@@ -1,5 +1,0 @@
-[
-   { "source": "~/dotfiles/ghostty/config", "target": "~/.config/ghostty/config" },
-   { "source": "~/dotfiles/nvim/init.lua",  "target": "~/.config/nvim/init.lua" },
-   { "source": "~/dotfiles/fish/.config/fish/config.fish",  "target": "~/.config/fish/.config/fish/config.fish" }
-]
