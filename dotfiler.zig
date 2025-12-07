@@ -47,7 +47,7 @@ pub fn main() !void {
         try std.fs.cwd().makePath(resolved_target);
     }
 
-    const dir = try std.fs.openDirAbsolute(resolved_source, .{});
+    const dir = try std.fs.openDirAbsolute(resolved_source, .{.iterate = true});
 
     var iterator = dir.iterate(); 
     while (try iterator.next()) |entry| {
